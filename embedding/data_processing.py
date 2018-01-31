@@ -14,6 +14,14 @@ def get_table_dim(t):
     return t['features']['no_of_rows'], t['features']['max_cols_in_a_row']
 
 
+def get_text_words(jobj, text_path):
+    my_parser = parse(text_path)
+    res = []
+    for match in my_parser.find(jobj):
+        val = match.value
+        res.extend(TextToolkit.tokenize_text(val))
+    return res
+
 def get_table_from_jpath(jobj, jpath, minrow, mincol):
     if jobj is None:
         return []
@@ -84,41 +92,52 @@ def prune_words(word_tuples, cutoff, num_docs):
         res.append(x)
     return res
 
-def get_occurrences(tok_tarr, window, thresh):
-    # within cell
-    tok_tarr = tok_tarr['tok_tarr']
-    for row in tok_tarr:
-        for c in row:
-            for i in range(len(c)):
-                for j in range(max(0, i-window), min(len(c), i+window)):
-                    if i != j:
-                        yield (c[i], c[j], 1.0)
-    # adjacent rows
-    for i in range(len(tok_tarr)-1):
-        for j in range(len(tok_tarr[i])):
-            for x in cross_product_arrays(tok_tarr[i][j], tok_tarr[i+1][j], thresh):
-                yield (x[0], x[1], 1.0)
+def get_occurrences(tok_tarr, window, thresh, sentences):
+    if 'cell' in sentences:
+        # within cell
+        tok_tarr = tok_tarr['tok_tarr']
+        for row in tok_tarr:
+            for c in row:
+                for i in range(len(c)):
+                    for j in range(max(0, i-window), min(len(c), i+window)):
+                        if i != j:
+                            yield (c[i], c[j], 1.0)
+    if 'adjcell' in sentences:
+        # adjacent rows
+        for i in range(len(tok_tarr)-1):
+            for j in range(len(tok_tarr[i])):
+                for x in cross_product_arrays(tok_tarr[i][j], tok_tarr[i+1][j], thresh):
+                    yield (x[0], x[1], 1.0)
 
-    # adjacent cols
-    for i in range(len(tok_tarr)):
-        for j in range(len(tok_tarr[i])-1):
-            for x in cross_product_arrays(tok_tarr[i][j], tok_tarr[i][j+1], thresh):
-                yield (x[0], x[1], 1.0)
+        # adjacent cols
+        for i in range(len(tok_tarr)):
+            for j in range(len(tok_tarr[i])-1):
+                for x in cross_product_arrays(tok_tarr[i][j], tok_tarr[i][j+1], thresh):
+                    yield (x[0], x[1], 1.0)
 
-    # first row
-    for i in range(1, len(tok_tarr)):
-        for j in range(len(tok_tarr[i])):
-            for x in cross_product_arrays(tok_tarr[0][j], tok_tarr[i][j], thresh):
-                yield (x[0], x[1], 1.0)
+    if 'hrow' in sentences:
+        # first row
+        for i in range(1, len(tok_tarr)):
+            for j in range(len(tok_tarr[i])):
+                for x in cross_product_arrays(tok_tarr[0][j], tok_tarr[i][j], thresh):
+                    yield (x[0], x[1], 1.0)
 
-    # first col
-    for i in range(len(tok_tarr)):
-        for j in range(1, len(tok_tarr[i])):
-            for x in cross_product_arrays(tok_tarr[i][0], tok_tarr[i][j], thresh):
-                yield (x[0], x[1], 1.0)
+    if 'hcol' in sentences:
+        # first col
+        for i in range(len(tok_tarr)):
+            for j in range(1, len(tok_tarr[i])):
+                for x in cross_product_arrays(tok_tarr[i][0], tok_tarr[i][j], thresh):
+                    yield (x[0], x[1], 1.0)
 
 
-
+def get_text_occurrences(jobj, text_path, window):
+    text_parser = parse(text_path)
+    for match in text_parser.find(jobj):
+        text = match.value
+        tokens = TextToolkit.tokenize_text(text)
+        for i in range(0, len(tokens)-window):
+            for k in range(1, window+1):
+                yield (tokens[i], tokens[i+k], 1.0)
 
 
 def cross_product_arrays(l1, l2, thresh):

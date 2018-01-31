@@ -6,7 +6,9 @@ def f(x):
 
 
 def wrap_random_indexing_spark(sc, input_path,
-                               words, table_path, put_extractions, regularize_tokens,
+                               words, table_path, text_path, put_extractions, regularize_tokens,
+                               sentences,
+                               word_embeddings_path,
                                size=100, window=2, d=2,
                                min_count=5, max_product_th=100):
     ri = RandomIndexing(size=size, window=window,
@@ -16,11 +18,15 @@ def wrap_random_indexing_spark(sc, input_path,
     embeddings = sc.textFile(input_path). \
         flatMap(lambda x: get_table_from_jpath(json.loads(x), table_path, 2, 2)). \
         map(lambda x: create_tokenized_table(x, put_extractions, regularize_tokens)).\
-        flatMap(lambda x: get_occurrences(x, window, max_product_th)).\
-        flatMap(lambda x: address_occurrence(x, ri)). \
-        reduceByKey(lambda v1, v2: v1 + v2). \
-        collect()
-    # embeddings.saveAsTextFile('/Users/majid/Desktop/temp/')
+        flatMap(lambda x: get_occurrences(x, window, max_product_th, sentences)).\
+        flatMap(lambda x: address_occurrence(x, ri))
+    if 'text' in sentences:
+        text_emb = sc.textFile(input_path). \
+            flatMap(lambda x: get_text_occurrences(json.loads(x), text_path, window)).\
+            flatMap(lambda x: address_occurrence(x, ri))
+        embeddings = sc.union([embeddings, text_emb])
+    embeddings = embeddings.reduceByKey(lambda v1, v2: v1 + v2)
+
     return embeddings
 
 def calc_embedding_partition(occurrences, ri):

@@ -81,6 +81,11 @@ class TextToolkit:
         text = re.sub('\s+', ' ', text)  # white spaces and \n's
         return text
 
+    @staticmethod
+    def tokenize_text(text):
+        res = nltk.word_tokenize(text)
+        return res
+
 
 
 class TableToolkit:
@@ -492,7 +497,7 @@ class TableToolkit:
         return True
 
     def tokenize_cell(self, text):
-        res = nltk.word_tokenize(text)
+        res = TextToolkit.tokenize_text(text)
         res = [x for x in res if self.has_data(x)]
         return res
 
