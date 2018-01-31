@@ -63,6 +63,9 @@ if __name__ == '__main__':
                     r_text = 'reg' if r else 'noreg'
                     inpath = '{}/data/{}.etk.out'.format(dig_home,d)
                     wepath = '{}/tabvec/output/{}/we_{}_{}_{}_{}'.format(dig_home,d,c,r_text,dim,'_'.join(s))
+                    if os.path.exists(wepath):
+                        print 'path existed .... continuing ...'
+                        continue
                     run_word_embedding(sc, config, inpath, wepath)
         elif command2 == 'tables':
             # generate table vectors with different settings
