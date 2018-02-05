@@ -29,7 +29,7 @@ class RandomIndexing(object):
 
     def get_word_base(self, w):
         if w not in self.base:
-            return np.zeros(self.d)
+            return None
         return self.base[w]
 
     def get_init_embedding(self):

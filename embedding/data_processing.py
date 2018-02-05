@@ -93,9 +93,9 @@ def prune_words(word_tuples, cutoff, num_docs):
     return res
 
 def get_occurrences(tok_tarr, window, thresh, sentences):
+    tok_tarr = tok_tarr['tok_tarr']
     if 'cell' in sentences:
         # within cell
-        tok_tarr = tok_tarr['tok_tarr']
         for row in tok_tarr:
             for c in row:
                 for i in range(len(c)):
@@ -130,14 +130,13 @@ def get_occurrences(tok_tarr, window, thresh, sentences):
                     yield (x[0], x[1], 1.0)
 
 
-def get_text_occurrences(jobj, text_path, window):
-    text_parser = parse(text_path)
-    for match in text_parser.find(jobj):
-        text = match.value
-        tokens = TextToolkit.tokenize_text(text)
-        for i in range(0, len(tokens)-window):
-            for k in range(1, window+1):
-                yield (tokens[i], tokens[i+k], 1.0)
+def get_text_occurrences(jobj, window):
+    if type(jobj) is not dict:
+        return 
+    tokens = jobj['text_tokens']
+    for i in range(0, len(tokens)-window):
+        for k in range(1, window+1):
+            yield (tokens[i], tokens[i+k], 1.0)
 
 
 def cross_product_arrays(l1, l2, thresh):

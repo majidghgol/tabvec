@@ -16,17 +16,22 @@ def put_table_vector(doc, vec):
                 vec=vec.tolist()))
 
 
-def run_table_embedding(sc, config, input_path, word_embeddings_path, table_vectors_path):
+def run_table_embedding(sc, config, tok_table_path, word_embeddings_path, table_vectors_path):
     word_embeddings = sc.textFile(word_embeddings_path).\
-        map(lambda x: json.loads(x)).map(lambda x: (x['word'], np.array(x['vector']))).collect()
+        map(lambda x: json.loads(x)).\
+        filter(lambda x: sum([abs(xx) for xx in x['vector']]) > 100).\
+        map(lambda x: (x['word'], np.array(x['vector'])))
+
+    # print word_embeddings.count()
+    # return
+    word_embeddings = word_embeddings.collect()
     word_embeddings = dict(word_embeddings)
     # generate table vectors
     te = TableEmbedding()
-    sc.textFile(input_path). \
-        flatMap(lambda x: get_table_from_jpath(json.loads(x), config['table_path'], 2, 2)). \
-        map(lambda x: create_tokenized_table(x, config['put_extractions'], config['regularize_tokens'])). \
+    sc.textFile(tok_table_path). \
+        map(lambda x: json.loads(x)).\
         map(lambda x: put_table_vector(x, te.calc_table_vector(x['tok_tarr'], [word_embeddings], [1]))). \
-        saveAsTextFile(table_vectors_path)
+        saveAsTextFile(table_vectors_path, compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 
         #saveAsTextFile(outpath, compressionCodecClass='org.apache.hadoop.io.compress.GzipCodec')

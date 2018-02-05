@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'toolkit'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import gzip
 from toolkit import TableToolkit, VizToolkit, TextToolkit, MLToolkit
 from data_processing import get_table_from_jpath, create_tokenized_table
 
@@ -14,19 +15,6 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import normalize
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
-
-config = {
-    'master': 'local[*]',
-    'vector_dim': 100,
-    'table_vector_dim': 3,
-    'nbits': 2,
-    'window': 2,
-    'put_extractions': False,
-    'regularize_tokens': True,
-    'cut-off': 0.05,
-    'table_path': '*.table.tables[*]',
-    'max_product_th': 100
-}
 
 def get_clusters(vecs, method, n_clusters):
     if method == 'kmeans':
@@ -37,30 +25,25 @@ def get_clusters(vecs, method, n_clusters):
         cl = AgglomerativeClustering(n_clusters)
     return cl.fit_predict(vecs)
 
+def get_id_vector(doc):
+    return dict(vector=np.array(doc['vector'], dtype='float64'),
+                cdr_id=doc['cdr_id'],
+                fingerprint=doc['fingerprint'])
 
-if __name__ == '__main__':
-    conf = SparkConf().setAppName("tableEmbeddingApp") \
-        .setMaster(config['master'])
-    sc = SparkContext(conf=conf)
-    _ = SparkSession(sc)
-    input_path = sys.argv[1]
-    table_counts = sc.textFile(input_path).count()
-    print '{} tables found'.format(table_counts)
-    tables = sc.textFile(input_path).map(lambda x: json.loads(x)).collect()
-    table_vecs = np.zeros((table_counts, config['table_vector_dim']), dtype='float64')
-    # ids = list()
-    for i, t in enumerate(tables):
-        # ids.append((t['cdr_id'], t['fingerprint']))
-        for j, x in enumerate(t['vec']):
-            table_vecs[i, j] = x
-    method = sys.argv[3]
-    num_clusters = int(sys.argv[4])
+
+def run_clustering(tables, table_vecs, method, num_clusters, outpath):
+    # table_id_vecs = sc.textFile(tables_path).map(lambda x: json.loads(x)).collect()
+    # table_id_vecs = sc.textFile(tables_path).map(lambda x: get_id_vector(json.loads(x))).collect()
     clusters = get_clusters(table_vecs, method, num_clusters)
-    outfile = open(sys.argv[2], 'w')
+    print 'writing clusters to output ...'
+    outfile = gzip.open(outpath, 'w')
     for t, c in zip(tables, clusters):
         t['cluster'] = str(c)
-        outfile.write(json.dumps(t) + '\n')
+        outfile.write(json.dumps(t)+'\n')
     outfile.close()
+
+
+
 
 
 

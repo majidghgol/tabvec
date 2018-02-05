@@ -265,6 +265,62 @@ class TableToolkit:
 
         return sio.getvalue()
 
+    def create_html_from_html_with_labels(self, t_html, l=None, tl=None, valid_labels=None, table_type=None,
+                                           cdr_id=None, fingerprint=None, table_index=0, ishard=False,
+                                           meta={}):
+        sio = StringIO.StringIO()
+        sio.write('<table_annotation__ style="display: table-row;width: 100%;float:left;">\n')
+        sio.write(self.create_type_annotation_div(table_type, ishard) + '\n')
+        sio.write('<table_itself__ style="display: table-cell">\n')
+        sio.write('<table border="1">\n')
+        sio.write(t_html+'\n')
+
+        sio.write('</table_itself__>\n')
+        # predicted semantic labels
+        if l is not None:
+            sio.write('<predicted_labels style="display: table-cell" name="predicted_labels">\n')
+            sio.write('<table border="1">\n')
+            for i, r in enumerate(l):
+                sio.write('<tr><td>' + str(l[i].encode('utf-8')) + '</td></tr>')
+            sio.write('</table>\n')
+            sio.write('</predicted_labels>\n')
+        sio.write('<meta__ style="display: table-row;width: 100%;float:left;">\n')
+        sio.write('table index: {}'.format(table_index))
+        if cdr_id is not None:
+            sio.write('<cdr_id__ name="{}"></cdr_id__>\n'.format(cdr_id))
+            sio.write('cdr_id: {}'.format(cdr_id))
+            # sio.write('<cdr_id__></__cdr_id__>\n')
+        if fingerprint is not None:
+            sio.write('<fingerprint__ name="{}"></fingerprint__>\n'.format(fingerprint))
+            sio.write('fingerprint: {}'.format(fingerprint))
+        for k, v in meta.items():
+            sio.write('<{0}__ name="{0}"></{1}__>\n'.format(k, v))
+            sio.write('{}: {}'.format(k, v))
+            # sio.write('<fingerprint__></__fingerprint__>\n')
+        sio.write('</meta__>\n')
+        sio.write('</table_annotation__>\n')
+
+        # true semantic labels
+        if valid_labels is not None:
+            if tl is not None:
+                sio.write('<true_labels style="display: table-cell" name="true_labels">\n')
+                sio.write('<table border="1">\n')
+                for i, r in enumerate(tl):
+                    sio.write('<tr><td>' + self.create_dropdown_html(valid_labels, tl[i] if tl[
+                                                                                           i] in valid_labels else None) + '</td></tr>')
+                sio.write('</table>\n')
+                sio.write('</true_labels>\n')
+            elif l is not None:
+                sio.write('<true_labels style="display: table-cell" name="true_labels">\n')
+                sio.write('<table border="1">\n')
+                for i, r in enumerate(t):
+                    sio.write('<tr><td>' + self.create_dropdown_html(valid_labels,
+                                                                l[i] if l[i] in valid_labels else None) + '</td></tr>')
+                sio.write('</table>\n')
+                sio.write('</true_labels>\n')
+
+        return sio.getvalue()
+
     def create_html_page(self, tables, towrite, semantic_labels=None):
         html_file = StringIO.StringIO()
         html_file.write('<html>\n')
