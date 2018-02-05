@@ -7,7 +7,7 @@ import re
 from os import walk
 
 if __name__ == '__main__':
-    for d in ['ATF', 'HT', 'SEC']:
+    for d in ['HT']:
         print '####### working on {} #######'.format(d)
         path = '/home/majid/my_drive/DIG/tabvec/output/{}'.format(d)
         outpath = '/home/majid/my_drive/DIG/tabvec/output/evaluation/{}.json'.format(d)
@@ -19,8 +19,8 @@ if __name__ == '__main__':
             for ff in filenames:
                 if re.match('^cl_.*\.gz$', ff):
                     files.append(ff)
-        for f in files:
-            print '{} .....'.format(f)
+        for i, f in enumerate(files):
+            print '{}/{}: {} .....'.format(i+1, len(files), f)
             tables_clusters = []
             with gzip.open(os.path.join(path, f), "r") as infile:
                 for line in infile:

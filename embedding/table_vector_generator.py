@@ -32,7 +32,7 @@ if __name__ == '__main__':
     cutoff = [1e-4]
     nclusters = [2, 3, 4, 5, 6, 7, 8, 9, 10]
     regularize = [True, False]
-    vec_dim = [100, 200, 300]
+    vec_dim = [100, 200, 300, 400,500]
     sentences = [['text', 'hrow', 'cell', 'adjcell', 'hcol'],
                  ['text', 'cell'],
                  ['cell', 'hrow', 'hcol'],

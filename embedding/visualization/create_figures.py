@@ -32,7 +32,7 @@ if __name__ == '__main__':
     eval_res = json.load(open(infile))
     print eval_res
     # plt.figure(1)
-    dd = [100,200]
+    dd = [100,200, 300]
     nn = [4,6,8,10,12]
 
     sentences = [
