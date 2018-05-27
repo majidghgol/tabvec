@@ -4,7 +4,6 @@ import os
 import numpy as np
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
-import pickle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -21,10 +20,10 @@ def get_clusters(vecs, method, n_clusters):
     if method == 'kmeans':
         cl = KMeans(n_clusters)
     elif method == 'dbscan':
-        cl = DBSCAN(eps=0.5, min_samples=1000)
+        cl = DBSCAN(eps=0.009, min_samples=5)
     elif method == 'agg':
         cl = AgglomerativeClustering(n_clusters)
-    return cl.fit_predict(vecs), cl
+    return cl.fit_predict(vecs)
 
 def get_id_vector(doc):
     return dict(vector=np.array(doc['vector'], dtype='float64'),
@@ -32,17 +31,17 @@ def get_id_vector(doc):
                 fingerprint=doc['fingerprint'])
 
 
-def run_clustering(table_vecs, method, num_clusters, outpath):
+def run_clustering(cells, table_vecs, method, num_clusters, outpath):
     # table_id_vecs = sc.textFile(tables_path).map(lambda x: json.loads(x)).collect()
     # table_id_vecs = sc.textFile(tables_path).map(lambda x: get_id_vector(json.loads(x))).collect()
-    clusters, cl = get_clusters(table_vecs, method, num_clusters)
-    print 'writing model to output ...'
-    pickle.dump(cl, open(outpath+'.pickle', 'wb'))
-    return clusters
+    clusters = get_clusters(table_vecs, method, num_clusters)
+    print 'writing clusters to output ...'
+    outfile = gzip.open(outpath, 'w')
+    for t, c in zip(cells, clusters):
+        t['cluster'] = str(c)
+        outfile.write(json.dumps(t)+'\n')
+    outfile.close()
 
-def run_clustering2(texts, vecs, method, num_clusters):
-    clusters, cl = get_clusters(vecs, method, num_clusters)
-    return clusters
 
 
 

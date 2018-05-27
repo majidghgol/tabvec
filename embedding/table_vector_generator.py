@@ -83,12 +83,12 @@ if __name__ == '__main__':
                     r_text = 'reg' if r else 'noreg'
                     tok_table_path = '{}/tabvec/output/{}/tokenized/toktarr_{}'.format(dig_home, d, r_text)
                     if os.path.exists(tok_table_path):
-                        print '"{}" existed .... continuing ...'.format(tok_table_path)
+                        print('"{}" existed .... continuing ...'.format(tok_table_path))
                     else:
                         run_tokenize_table(sc, config, inpath, tok_table_path)
                     tok_text_path = '{}/tabvec/output/{}/tokenized/text_{}'.format(dig_home, d, r_text)
                     if os.path.exists(tok_text_path):
-                        print '"{}" existed .... continuing ...'.format(tok_text_path)
+                        print('"{}" existed .... continuing ...'.format(tok_text_path))
                     else:
                         run_tokenize_text(sc, config, inpath, tok_text_path)
 
@@ -105,12 +105,12 @@ if __name__ == '__main__':
                     r_text = 'reg' if r else 'noreg'
                     for t in [True, False]:
                         t_text = 'text' if t else 'notext'
-                        print 'creating word counts for {} with: r={}, t={}'.format(d, r, t_text)
+                        print('creating word counts for {} with: r={}, t={}'.format(d, r, t_text))
                         tok_table_path = '{}/tabvec/output/{}/tokenized/toktarr_{}'.format(dig_home, d, r_text)
                         tok_text_path = '{}/tabvec/output/{}/tokenized/text_{}'.format(dig_home, d, r_text)
                         wcpath = '{}/tabvec/output/{}/wc_{}_{}'.format(dig_home, d, r_text, t_text)
                         if os.path.exists(wcpath):
-                            print 'path existed .... continuing ...'
+                            print('path existed .... continuing ...')
                             continue
                         run_word_count(sc, tok_table_path, tok_text_path, wcpath, t)
         elif command2 == 'word_occ':
@@ -125,12 +125,12 @@ if __name__ == '__main__':
                     }
                     r_text = 'reg' if r else 'noreg'
                     for context in ['text', 'cell', 'adjcell', 'hrow', 'hcol']:
-                        print 'creating word occurrences for {} with: r={}, c={}'.format(d, r, context)
+                        print('creating word occurrences for {} with: r={}, c={}'.format(d, r, context))
                         tok_table_path = '{}/tabvec/output/{}/tokenized/toktarr_{}'.format(dig_home, d, r_text)
                         tok_text_path = '{}/tabvec/output/{}/tokenized/text_{}'.format(dig_home, d, r_text)
                         occ_path = '{}/tabvec/output/{}/occurrences/occ_{}_{}'.format(dig_home, d, r_text, context)
                         if os.path.exists(occ_path):
-                            print 'path existed .... continuing ...'
+                            print('path existed .... continuing ...')
                         else:
                             create_occurrences(sc, tok_table_path, tok_text_path, occ_path,
                                                context, window=2, max_product_th=100)
@@ -138,10 +138,10 @@ if __name__ == '__main__':
             # generate word embeddings with different settings
             for d in datasets:
                 doc_counts = None
-                print 'working on {} -------'.format(d)
+                print('working on {} -------'.format(d))
                 inpath = '{}/data/{}.etk.out'.format(dig_home, d)
                 doc_counts = sc.textFile(inpath).count()
-                print '{} documents in domain {}'.format(doc_counts, d)
+                print('{} documents in domain {}'.format(doc_counts, d))
                 for r, s in product(regularize, sentences):
                     r_text = 'reg' if r else 'noreg'
                     if 'text' in sentences:
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     occ = None
                     word_counts = None
                     for c, dim in product(cutoff, vec_dim):
-                        print 'c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s))
+                        print('c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s)))
                         config = {
                             'vector_dim': dim,
                             'nbits': 2,
@@ -167,17 +167,17 @@ if __name__ == '__main__':
                         }
                         wepath = '{}/tabvec/output/{}/we_{}_{}_{}_{}'.format(dig_home, d, c, r_text, dim, '_'.join(s))
                         if os.path.exists(wepath):
-                            print 'path existed .... continuing ...'
+                            print('path existed .... continuing ...')
                             continue
 
                         if word_counts is None:
-                            print 'word count and occ in process ...'
+                            print('word count and occ in process ...')
                             word_counts = sc.textFile(wcpath).map(lambda x: eval(x)). \
                                 reduceByKey(lambda v1, v2: v1 + v2).collect()
                             tok_table_path = '{}/tabvec/output/{}/tokenized/toktarr_{}'.format(dig_home, d, r_text)
                             occ_path = '{}/tabvec/output/{}/occurrences/occ_{}'.format(dig_home, d, r_text)
                             occ = read_occurrences(sc, occ_path, s).persist()
-                        print 'creating word embeddings ...'
+                        print('creating word embeddings ...')
                         run_word_embedding(sc, config, occ, doc_counts, word_counts, wepath)
                     if occ is not None:
                         occ.unpersist()
@@ -185,7 +185,7 @@ if __name__ == '__main__':
             # generate table vectors with different settings
             for d in datasets:
                 for c, r, dim, s in product(cutoff, regularize, vec_dim, sentences):
-                    print 'creating table vectors with: c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s))
+                    print('creating table vectors with: c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s)))
                     config = {
                         'vector_dim': dim,
                         'nbits': 2,
@@ -204,17 +204,17 @@ if __name__ == '__main__':
                     wepath = '{}/tabvec/output/{}/we_{}_{}_{}_{}'.format(dig_home,d,c,r_text,dim,'_'.join(s))
                     outpath = '{}/tabvec/output/{}/tablevecs_{}_{}_{}_{}'.format(dig_home,d, c, r_text, dim, '_'.join(s))
                     if os.path.exists(outpath):
-                        print 'path existed .... continuing ...'
+                        print('path existed .... continuing ...')
                     else:
                         run_table_embedding(sc, config, tok_table_path, wepath, outpath)
 
     elif command == 'cluster':
         # generate table vectors with different settings
         for d in datasets:
-            print 'working on {} ....'.format(d)
+            print('working on {} ....'.format(d))
             table_count = None
             for c, r, dim, s in product(cutoff, regularize, vec_dim, sentences):
-                print 'loading word embeddings: c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s))
+                print('loading word embeddings: c={}, r={},d={},s=[{}]'.format(c, r, dim, ','.join(s)))
                 r_text = 'reg' if r else 'noreg'
 
                 wepath = '{}/tabvec/output/{}/we_{}_{}_{}_{}'.format(dig_home, d, c, r_text, dim, '_'.join(s))
@@ -234,14 +234,14 @@ if __name__ == '__main__':
                 table_vecs = [x['vec'] for x in tables]
                 table_vecs_matrix = np.matrix(table_vecs)
                 realse_list(table_vecs)
-                print table_vecs_matrix.shape
+                print(table_vecs_matrix.shape)
                 for method in cl_methods:
                     for n in num_clusters:
-                        print 'clustering with: m={},n={}'.format(method,n)
+                        print('clustering with: m={},n={}'.format(method,n))
                         outpath = '{}/tabvec/output/{}/cl_{}_n{}_{}_{}_{}_{}.jl.tar.gz'.format(dig_home, d, method, n, c, r_text, dim,
                                                                                      '_'.join(s))
                         if os.path.exists(outpath):
-                            print 'path existed .... continuing ...'
+                            print('path existed .... continuing ...')
                         else:
                             run_clustering(tables, table_vecs_matrix, method, n, outpath)
                 del table_vecs_matrix
@@ -254,4 +254,4 @@ if __name__ == '__main__':
                     shutil.rmtree('{}/tabvec/output/{}/we_{}_{}_{}_{}'.format(dig_home,d, c, r_text, dim, '_'.join(s)))
                     shutil.rmtree('{}/tabvec/output/{}/tablevecs_{}_{}_{}_{}'.format(dig_home,d, c, r_text, dim, '_'.join(s)))
                 except Exception as e:
-                    print e
+                    print(e)

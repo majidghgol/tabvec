@@ -12,7 +12,10 @@ if __name__ == '__main__':
         t = json.loads(line)
         fp = t['fingerprint'] if 'fingerprint' in t else None
         id_ = t['cdr_id'] if 'cdr_id' in t else None
-        html_file.write('<div>{}\ncluster: {}\nvector: {}<div>'.format(t['html'].encode('utf-8', errors='ignore'), t['cluster'], t['vec']))
+        html = t['html'] if 'html' in t else ""
+        vec = t['vec'] if 'vec' in t else None
+        cl = t['cluster'] if 'cluster' in t else None
+        html_file.write('<div>{}\ncluster: {}\nvector: {}<div>'.format(html.encode('utf-8', errors='ignore'), cl, vec))
     html_file.write('\n</body>\n</html>\n')
     html_file.close()
     infile.close()

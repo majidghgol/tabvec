@@ -6,6 +6,7 @@ import os
 import io
 from toolkit import TableToolkit
 from jsonpath_rw import jsonpath, parse
+import gzip
 
 all_labels = [
     "LAYOUT",
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 3:
         print('USAGE: INFILE OUTFILE')
         exit(-1)
-    infile = open(sys.argv[1])
+    infile = gzip.open(sys.argv[1])
     html_file = io.open(sys.argv[2], 'w', encoding='utf-8')
     html_file.write(u'<html>\n')
     html_file.write(u'''
@@ -103,9 +104,13 @@ if __name__ == '__main__':
             ishard = t['ishard']
         else:
             ishard = False
-        tarr = [[' '.join(cell) for cell in row] for row in t['tok_tarr']]
+        # tarr = [[' '.join(cell) for cell in row] for row in t['tok_tarr']]
+        tarr = t['tarr']
+        cl = t['cluster']
+        vec = t['vec']
         html_file.write(unicode(tabletk.create_html_from_array_with_labels(tarr, fingerprint=fp, cdr_id=id_,
-                                                           table_index=line_num, ishard=False) + '\n'))
+                                                           table_index=line_num, ishard=False,
+                                                                           meta={'cluster': cl, 'vec': vec}) + '\n'))
     html_file.write(u'</data__>')
     html_file.write(u'<submit__ style="width: 46%;border:2px solid black;float:left;display: table-cell" >\n')
     html_file.write(u'''

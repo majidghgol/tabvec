@@ -25,7 +25,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, isomap, LocallyLinearEmbedding
 from matplotlib.ticker import AutoMinorLocator
 
-sys.path.append('/Users/majid/DIG/pycharm-projects-ubuntu-mayank/memex-CP4/')
+# sys.path.append('/Users/majid/DIG/pycharm-projects-ubuntu-mayank/memex-CP4/')
 # from wordEmbeddings.RandomIndexer import RandomIndexer
 # from wordEmbeddings.TextAnalyses import TextAnalyses
 
@@ -86,6 +86,10 @@ class TextToolkit:
         res = nltk.word_tokenize(text)
         return res
 
+    @staticmethod
+    def get_text_sentences(text):
+        res = nltk.sent_tokenize(text)
+        return res
 
 
 class TableToolkit:
@@ -215,7 +219,7 @@ class TableToolkit:
                 if len(c) > 50:
                     c = c[:50]
                     c += '....'
-                sio.write('<td>' + c.encode('utf-8') + '</td>')
+                sio.write(u'<td>' + c + u'</td>')
             sio.write('</tr>')
         sio.write('</tbody>\n')
         sio.write('</table>\n')
@@ -229,17 +233,17 @@ class TableToolkit:
             sio.write('</table>\n')
             sio.write('</predicted_labels>\n')
         sio.write('<meta__ style="display: table-row;width: 100%;float:left;">\n')
-        sio.write('table index: {}'.format(table_index))
+        sio.write('table index: {}<br>'.format(table_index))
         if cdr_id is not None:
             sio.write('<cdr_id__ name="{}"></cdr_id__>\n'.format(cdr_id))
-            sio.write('cdr_id: {}'.format(cdr_id))
+            # sio.write('cdr_id: {}'.format(cdr_id))
             # sio.write('<cdr_id__></__cdr_id__>\n')
         if fingerprint is not None:
             sio.write('<fingerprint__ name="{}"></fingerprint__>\n'.format(fingerprint))
-            sio.write('fingerprint: {}'.format(fingerprint))
+            # sio.write('fingerprint: {}'.format(fingerprint))
         for k, v in meta.items():
             sio.write('<{0}__ name="{0}"></{1}__>\n'.format(k, v))
-            sio.write('{}: {}'.format(k, v))
+            sio.write('{}: {}<br>'.format(k, v))
             # sio.write('<fingerprint__></__fingerprint__>\n')
         sio.write('</meta__>\n')
         sio.write('</table_annotation__>\n')
@@ -262,6 +266,22 @@ class TableToolkit:
                                                                 l[i] if l[i] in valid_labels else None) + '</td></tr>')
                 sio.write('</table>\n')
                 sio.write('</true_labels>\n')
+            else:
+                sio.write('<true_labels style="display: table-cell" name="true_labels">\n')
+                sio.write('<table border="1">\n')
+                for i, r in enumerate(t):
+                    sio.write('<tr>')
+                    for c in r:
+                        sio.write('<td>' + self.create_dropdown_html(valid_labels, None) + '</td>')
+                    sio.write('</tr>')
+                sio.write('</table>\n')
+                sio.write('</true_labels>\n')
+
+        sio.write('<header_ann__ style="display: table-cell" name="header_ann_">\n')
+        sio.write('column headers: <input type="text" name="col_headers_"><br>')
+        sio.write('row headers: <input type="text" name="row_headers_"><br>')
+        sio.write('</header_ann__ style>')
+
 
         return sio.getvalue()
 
@@ -609,7 +629,6 @@ class TableToolkit:
         return sio.getvalue()
 
 
-
 class VizToolkit:
     def plot_confusion_matrix(self, cm, classes, title='', x_label='Predicted label',
                               y_label='True label', cmap=plt.cm.Blues, save_to_file=None, vmax=None,
@@ -618,11 +637,11 @@ class VizToolkit:
         This function prints and plots the confusion matrix.
         Normalization can be applied by setting `normalize=True`.
         """
-        plt.figure(fignum)
+        # plt.figure(fignum)
         if vmax is None:
             vmax = cm.max()
         vmax = float(vmax)
-        ax = plt.subplot(sub_plot)
+        # ax = plt.subplot(sub_plot)
 
         plt.imshow(cm, interpolation='nearest', cmap=cmap, vmin=0, vmax=vmax)
         x = np.arange(-1,len(classes)+1, 0.01)
@@ -635,8 +654,21 @@ class VizToolkit:
         for i in range(len(classes)):
             plt.plot(x, [0.5+i]*len(x), color='black')
             plt.plot([0.5 + i] * len(x), x, color='black')
-        plt.tick_params(axis='both', which='major', labelsize=13)
-        thresh = vmax/2.0
+        plt.tick_params(
+            axis='x',  # changes apply to the x-axis
+            which='both',  # both major and minor ticks are affected
+            bottom='off',  # ticks along the bottom edge are off
+            top='off',  # ticks along the top edge are off
+            labelbottom='off')
+        plt.tick_params(
+            axis='y',  # changes apply to the x-axis
+            which='both',  # both major and minor ticks are affected
+            left='off',  # ticks along the bottom edge are off
+            right='off',  # ticks along the top edge are off
+            labelleft='off')
+
+        # plt.tick_params(axis='both', which='major', labelsize=13)
+        # thresh = vmax/2.0
         # for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
         #     plt.text(j, i, "%.2f" % round(cm[i, j],2),
         #              horizontalalignment="center",
@@ -654,7 +686,7 @@ class VizToolkit:
             # plt.figure(fignum).savefig(save_to_file)
             # plt.figure(fignum).set_size_inches(15, 10)
             # plt.figure(fignum).set_dpi(100)
-            ax.set_aspect('equal')
+            plt.axes('both').set_aspect('equal')
             plt.figure(fignum).tight_layout()
             plt.figure(fignum).savefig(save_to_file)
             # plt.figure(fignum).savefig(save_to_file+'.png')
@@ -707,6 +739,22 @@ class VizToolkit:
         elif show:
             print 'here we are!'
             plt.show()
+
+    def plot_highdim_2d(self, vecs, labels):
+        mltk = MLToolkit()
+        X = mltk.manifold_TSNE(vecs, 2, verbose=2)
+        plt.scatter([x[0] for x in X], [x[1] for x in X])
+        for i, v in enumerate(X):
+            # print(v)
+            # if not show:
+            #     continue
+            plt.annotate(
+                labels[i],
+                xy=v, xytext=(-10, 10),
+                textcoords='offset points', ha='right', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.5', fc='b', alpha=0.3),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+        plt.show()
 
     def plot_x_pca(self, X_pca, pca_methods, words=None, show_label=None):
         fig = plt.figure(figsize=(15, 8))
@@ -861,12 +909,21 @@ class VizToolkit:
         else:
             plt.show()
 
-    def plot_x_pca_v5(self, X_pca, labels, title='', save_to_file=None, cl_model=None, fignum=1):
-        plt.figure(fignum)
-        classes = list(set(labels))
-        colors_ = cycle(['firebrick', 'darkgreen', 'darkblue', 'darkmagneta', 'deeppink'])
-        my_cm = plt.cm.Paired
-        colors_ = [xx[1] for xx in zip(classes, colors_)]
+    def plot_x_pca_v5(self, X_pca, labels, title='',
+                      save_to_file=None, cl_model=None,
+                      fignum=1, colors=None, markers=None,
+                      classes=None):
+        # plt.figure(fignum)
+        if classes is None:
+            classes = list(set(labels))
+        if not colors:
+            colors = ['firebrick', 'darkgreen', 'darkblue', 'darkmagneta', 'deeppink']
+        if not markers:
+            markers = ['o']
+        colors = cycle(colors)
+        markers = cycle(markers)
+        colors = [xx[1] for xx in zip(classes, colors)]
+        markers = [xx[1] for xx in zip(classes, markers)]
         points = dict()
         for x, l in zip(X_pca, labels):
             if l in points:
@@ -875,14 +932,15 @@ class VizToolkit:
                 points[l] = [x]
         plots = []
         legends = []
-        for i, (l, p) in enumerate(points.items()):
+        for i, l in enumerate(classes):
+            p = points[l]
             # print l, classes.index(l) * 255 / len(classes), my_cm(classes.index(l) * 255 / len(classes))
-            plots.append(plt.scatter([x[0]for x in p], [x[1] for x in p], color=my_cm(classes.index(l) * 11 / len(classes))))
+            plots.append(plt.scatter([x[0]for x in p], [x[1] for x in p], facecolors='none', edgecolor=colors[i], marker=markers[i], s=150))
             legends.append(l)
         plt.title(title, fontsize=14)
         print('putting points')
         print('done putting points')
-        plt.legend(plots, legends, loc="upper right", prop={'size': 10})
+        plt.legend(plots, legends, loc="lower right", prop={'size': 14})
 
         if cl_model is not None:
             X = X_pca[: , 0]
@@ -1170,7 +1228,7 @@ class MLToolkit:
                 # conf_matrix[x,y] += 1
                 conf_matrix[y,x] += 1
         for i in range(n):
-            conf_matrix[i] = conf_matrix[i] / np.sum(conf_matrix[i])
+            conf_matrix[i] = conf_matrix[i] / (np.sum(conf_matrix[i])+1e-6)
         return conf_matrix
 
     def calc_conf_matrix_clustering(self, sem_label_to_cluster, do_normalize=True):
